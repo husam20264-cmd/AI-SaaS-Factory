@@ -233,6 +233,35 @@ app.get(/^\/manifest\/([^/]+)\/?$/, (req, res) => {
   });
 });
 
+
+// Manifest route MUST be before static
+app.get("/manifest/:name", (req, res) => {
+  const name = safeName(req.params.name);
+
+  res.setHeader("Content-Type", "application/manifest+json");
+  res.setHeader("Cache-Control", "no-store");
+
+  res.json({
+    id: "/" + name + "/",
+    name: name,
+    short_name: name.slice(0, 12),
+    description: "AI SaaS Factory App",
+    start_url: "/preview/" + name,
+    scope: "/",
+    display: "standalone",
+    background_color: "#ffffff",
+    theme_color: "#2563eb",
+    lang: "ar",
+    dir: "rtl",
+    icons: [{
+      src: "https://cdn-icons-png.flaticon.com/512/1046/1046784.png",
+      sizes: "512x512",
+      type: "image/png",
+      purpose: "any maskable"
+    }]
+  });
+});
+
 app.use("/workspace", express.static(WORKSPACE));
 
 app.get("/", (req, res) => res.redirect("/dashboard"));
