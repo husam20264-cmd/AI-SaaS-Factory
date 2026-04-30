@@ -47,15 +47,15 @@ body{margin:0;background:#070b16;color:white;font-family:Arial;padding:20px}
 .header{background:linear-gradient(135deg,#2563eb,#7c3aed);padding:24px;border-radius:22px;margin-bottom:20px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
 .card{background:#111827;border:1px solid #263449;border-radius:16px;padding:16px}
-.btn{display:inline-block;margin:5px 4px 0 0;padding:9px 12px;border-radius:9px;color:white;text-decoration:none;border:0}
-.blue{background:#2563eb}.dark{background:#334155}.green{background:#16a34a}.red{background:#dc2626}
+.btn{display:inline-block;margin:5px 4px 0 0;padding:9px 12px;border-radius:9px;color:white;text-decoration:none;border:0;cursor:pointer}
+.blue{background:#2563eb}.dark{background:#334155}.green{background:#16a34a}.purple{background:#7c3aed}
 .small{color:#94a3b8;font-size:13px}
 </style>
 </head>
 <body>
 <div class="header">
   <h1>🚀 AI SaaS Factory</h1>
-  <p>Dashboard · Edit · Preview · Export ZIP</p>
+  <p>Dashboard · Edit · Preview · Export ZIP · AI Improve</p>
 </div>
 
 <h2>المشاريع (${projects.length})</h2>
@@ -66,11 +66,25 @@ ${projects.map(p => `
     <h3>${p}</h3>
     <div class="small">Website Project</div>
     <a class="btn blue" href="/edit/${p}">تعديل</a>
-    <a class="btn dark" target="_blank" href="/workspace/${p}/index.html">معاينة</a>
+    <a class="btn dark" target="_blank" href="/workspace/${p}/index.html?v=${Date.now()}">معاينة</a>
     <a class="btn green" href="/export/${p}">ZIP</a>
+    <button class="btn purple" onclick="improve('${p}')">✨ AI Improve</button>
   </div>
 `).join("")}
 </div>
+
+<script>
+async function improve(name){
+  const ok = confirm("تحسين المشروع تلقائيًا؟ " + name);
+  if(!ok) return;
+
+  const res = await fetch("/improve/" + name, { method: "POST" });
+  const data = await res.json();
+
+  alert(data.ok ? "✅ تم التحسين" : "❌ " + data.error);
+  location.reload();
+}
+</script>
 </body>
 </html>
 `);
@@ -112,6 +126,7 @@ textarea{width:100%;height:78vh;background:#020617;color:#e5e7eb;border:0;paddin
 <div class="top">
   <b>✏️ ${name}</b>
   <button onclick="save()">حفظ</button>
+  <button onclick="improve()">AI Improve</button>
   <a target="_blank" href="/workspace/${name}/index.html?v=${Date.now()}">معاينة</a>
   <a href="/export/${name}">ZIP</a>
   <a href="/dashboard">رجوع</a>
@@ -149,6 +164,14 @@ async function save(){
   const data = await res.json();
   alert(data.ok ? "✅ تم الحفظ" : "❌ فشل الحفظ");
 }
+
+async function improve(){
+  await save();
+  const res = await fetch("/improve/${name}", { method: "POST" });
+  const data = await res.json();
+  alert(data.ok ? "✅ تم التحسين" : "❌ " + data.error);
+  location.reload();
+}
 </script>
 </body>
 </html>
@@ -168,6 +191,67 @@ app.post("/edit/:name", (req, res) => {
   fs.writeFileSync(path.join(dir, "app.js"), req.body.js || "", "utf8");
 
   res.json({ ok: true });
+});
+
+app.post("/improve/:name", (req, res) => {
+  try {
+    const name = safeName(req.params.name);
+    const dir = path.join(WORKSPACE, name);
+    const htmlPath = path.join(dir, "index.html");
+    const cssPath = path.join(dir, "style.css");
+
+    if (!fs.existsSync(htmlPath)) {
+      return res.status(404).json({ ok: false, error: "index.html not found" });
+    }
+
+    let html = fs.readFileSync(htmlPath, "utf8");
+
+    html = html
+      .replace(/سجل الآن/g, "ابدأ الآن مجانًا 🚀")
+      .replace(/ابدأ الآن/g, "ابدأ الآن مجانًا 🚀")
+      .replace(/تواصل معنا/g, "تواصل معنا الآن")
+      .replace(/منصة التطوع/g, "منصة العمل الذكية");
+
+    if (!html.includes("ai-improve-badge")) {
+      html = html.replace(
+        "</body>",
+        `<div class="ai-improve-badge">✨ محسّن تلقائيًا</div></body>`
+      );
+    }
+
+    fs.writeFileSync(htmlPath, html, "utf8");
+
+    let css = fs.existsSync(cssPath) ? fs.readFileSync(cssPath, "utf8") : "";
+
+    if (!css.includes("AI_IMPROVE_V1")) {
+      css += `
+
+/* AI_IMPROVE_V1 */
+html{scroll-behavior:smooth}
+button,.btn,a{transition:.25s ease}
+button:hover,.btn:hover,a:hover{transform:translateY(-2px);filter:brightness(1.08)}
+section{animation:fadeInUp .55s ease both}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.ai-improve-badge{
+  position:fixed;
+  bottom:14px;
+  left:14px;
+  z-index:9999;
+  background:#111827;
+  color:#fff;
+  padding:9px 13px;
+  border-radius:999px;
+  font-size:12px;
+  box-shadow:0 10px 25px rgba(0,0,0,.25);
+}
+`;
+      fs.writeFileSync(cssPath, css, "utf8");
+    }
+
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
 });
 
 app.get("/export/:name", (req, res) => {
