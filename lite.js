@@ -14,8 +14,6 @@ if (!fs.existsSync(WORKSPACE)) {
   fs.mkdirSync(WORKSPACE, { recursive: true });
 }
 
-app.use("/workspace", express.static(WORKSPACE));
-
 function safeName(name) {
   return String(name || "").replace(/[^a-zA-Z0-9_-]/g, "");
 }
@@ -29,16 +27,15 @@ function esc(s) {
 
 function ensureProjectFiles(name) {
   const dir = path.join(WORKSPACE, name);
-
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
   const htmlPath = path.join(dir, "index.html");
   const cssPath = path.join(dir, "style.css");
   const jsPath = path.join(dir, "app.js");
   const manifestPath = path.join(dir, "manifest.json");
   const swPath = path.join(dir, "sw.js");
+
+  const manifestHref = `/manifest/${name}`;
 
   if (!fs.existsSync(htmlPath)) {
     fs.writeFileSync(htmlPath, `<!DOCTYPE html>
@@ -48,33 +45,45 @@ function ensureProjectFiles(name) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${name}</title>
   <meta name="theme-color" content="#2563eb">
-  <link rel="manifest" href="/manifest/${name}">
+  <link rel="manifest" href="${manifestHref}">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <main class="hero">
     <h1>🚀 ${name}</h1>
-    <p>موقع احترافي تم إنشاؤه بواسطة AI SaaS Factory</p>
-    <a class="btn" href="#contact">ابدأ الآن</a>
+    <p>موقع احترافي سريع ومتجاوب تم إنشاؤه بواسطة AI SaaS Factory</p>
+    <a class="btn" href="#contact">ابدأ الآن مجانًا 🚀</a>
   </main>
 
   <section class="features">
     <h2>مميزات المشروع</h2>
     <div class="cards">
       <div>⚡ سريع</div>
-      <div>📱 متجاوب</div>
+      <div>📱 PWA جاهز</div>
       <div>🎨 تصميم نظيف</div>
     </div>
   </section>
 
   <section id="contact" class="contact">
-    <h2>تواصل معنا</h2>
-    <p>جاهز للانطلاق الآن.</p>
+    <h2>تواصل معنا الآن</h2>
+    <p>جاهز للانطلاق.</p>
   </section>
 
   <script src="app.js"></script>
 </body>
 </html>`, "utf8");
+  } else {
+    let html = fs.readFileSync(htmlPath, "utf8");
+
+    if (!html.includes('rel="manifest"')) {
+      html = html.replace("</head>", `  <meta name="theme-color" content="#2563eb">
+  <link rel="manifest" href="${manifestHref}">
+</head>`);
+    } else {
+      html = html.replace(/<link\s+rel=["']manifest["'][^>]*>/i, `<link rel="manifest" href="${manifestHref}">`);
+    }
+
+    fs.writeFileSync(htmlPath, html, "utf8");
   }
 
   if (!fs.existsSync(cssPath)) {
@@ -95,10 +104,7 @@ function ensureProjectFiles(name) {
   color: white;
 }
 
-.hero h1 {
-  font-size: 42px;
-  margin-bottom: 10px;
-}
+.hero h1 { font-size: 42px; margin-bottom: 10px; }
 
 .btn {
   display: inline-block;
@@ -154,6 +160,7 @@ if ("serviceWorker" in navigator) {
 `, "utf8");
   }
 
+  // يكتب manifest دائمًا
   fs.writeFileSync(manifestPath, JSON.stringify({
     id: "/" + name + "/",
     name: name,
@@ -180,13 +187,7 @@ if ("serviceWorker" in navigator) {
 
   if (!fs.existsSync(swPath)) {
     fs.writeFileSync(swPath, `const CACHE_NAME = "${name}-v1";
-const ASSETS = [
-  "./",
-  "./index.html",
-  "./style.css",
-  "./app.js",
-  "./manifest.json"
-];
+const ASSETS = ["./", "./index.html", "./style.css", "./app.js"];
 
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)));
@@ -199,72 +200,13 @@ self.addEventListener("fetch", event => {
   }
 }
 
-app.get("/", (req, res) => {
-  res.redirect("/dashboard");
-});
-
-app.get("/dashboard", (req, res) => {
-  const projects = fs.readdirSync(WORKSPACE)
-    .filter(name => fs.statSync(path.join(WORKSPACE, name)).isDirectory());
-
-  res.send(`
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI SaaS Factory</title>
-<style>
-body{margin:0;background:#070b16;color:white;font-family:Arial;padding:20px}
-.header{background:linear-gradient(135deg,#2563eb,#7c3aed);padding:24px;border-radius:22px;margin-bottom:20px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
-.card{background:#111827;border:1px solid #263449;border-radius:16px;padding:16px}
-.btn{display:inline-block;margin:5px 4px 0 0;padding:9px 12px;border-radius:9px;color:white;text-decoration:none;border:0;cursor:pointer}
-.blue{background:#2563eb}.dark{background:#334155}.green{background:#16a34a}.purple{background:#7c3aed}.orange{background:#f97316}
-.small{color:#94a3b8;font-size:13px}
-</style>
-</head>
-<body>
-<div class="header">
-  <h1>🚀 AI SaaS Factory</h1>
-  <p>Dashboard · Edit · Preview · Export ZIP · AI Improve · APK</p>
-</div>
-
-<h2>المشاريع (${projects.length})</h2>
-
-<div class="grid">
-${projects.map(p => `
-  <div class="card">
-    <h3>${p}</h3>
-    <div class="small">Website / PWA Project</div>
-    <a class="btn blue" href="/edit/${p}">تعديل</a>
-    <a class="btn dark" target="_blank" href="/preview/${p}">معاينة</a>
-    <a class="btn green" href="/export/${p}">ZIP</a>
-    <a class="btn orange" href="/apk/${p}">APK 📱</a>
-    <button class="btn purple" onclick="improve('${p}')">AI Improve ✨</button>
-  </div>
-`).join("")}
-</div>
-
-<script>
-async function improve(name){
-  const res = await fetch("/improve/" + name, { method: "POST" });
-  const data = await res.json();
-  alert(data.ok ? "✅ تم التحسين" : "❌ " + data.error);
-  location.reload();
-}
-</script>
-</body>
-</html>
-`);
-});
-
-
-app.get("/manifest/:name", (req, res) => {
-  const name = safeName(req.params.name);
+// مهم: manifest route قبل static
+app.get(/^\/manifest\/([^/]+)\/?$/, (req, res) => {
+  const name = safeName(req.params[0]);
   ensureProjectFiles(name);
 
   res.setHeader("Content-Type", "application/manifest+json");
+  res.setHeader("Cache-Control", "no-store");
 
   res.json({
     id: "/" + name + "/",
@@ -291,6 +233,63 @@ app.get("/manifest/:name", (req, res) => {
   });
 });
 
+app.use("/workspace", express.static(WORKSPACE));
+
+app.get("/", (req, res) => res.redirect("/dashboard"));
+
+app.get("/dashboard", (req, res) => {
+  const projects = fs.readdirSync(WORKSPACE)
+    .filter(name => fs.statSync(path.join(WORKSPACE, name)).isDirectory());
+
+  res.send(`<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI SaaS Factory</title>
+<style>
+body{margin:0;background:#070b16;color:white;font-family:Arial;padding:20px}
+.header{background:linear-gradient(135deg,#2563eb,#7c3aed);padding:24px;border-radius:22px;margin-bottom:20px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+.card{background:#111827;border:1px solid #263449;border-radius:16px;padding:16px}
+.btn{display:inline-block;margin:5px 4px 0 0;padding:9px 12px;border-radius:9px;color:white;text-decoration:none;border:0;cursor:pointer}
+.blue{background:#2563eb}.dark{background:#334155}.green{background:#16a34a}.purple{background:#7c3aed}.orange{background:#f97316}
+.small{color:#94a3b8;font-size:13px}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>🚀 AI SaaS Factory</h1>
+  <p>Dashboard · Edit · Preview · Export ZIP · AI Improve · APK</p>
+</div>
+
+<h2>المشاريع (${projects.length})</h2>
+<div class="grid">
+${projects.map(p => `
+  <div class="card">
+    <h3>${p}</h3>
+    <div class="small">Website / PWA Project</div>
+    <a class="btn blue" href="/edit/${p}">تعديل</a>
+    <a class="btn dark" target="_blank" href="/preview/${p}">معاينة</a>
+    <a class="btn green" href="/export/${p}">ZIP</a>
+    <a class="btn orange" href="/apk/${p}">APK 📱</a>
+    <button class="btn purple" onclick="improve('${p}')">AI Improve ✨</button>
+  </div>
+`).join("")}
+</div>
+
+<script>
+async function improve(name){
+  const res = await fetch("/improve/" + name, { method: "POST" });
+  const data = await res.json();
+  alert(data.ok ? "✅ تم التحسين" : "❌ " + data.error);
+  location.reload();
+}
+</script>
+</body>
+</html>`);
+});
+
 app.get("/preview/:name", (req, res) => {
   const name = safeName(req.params.name);
   ensureProjectFiles(name);
@@ -306,8 +305,7 @@ app.get("/edit/:name", (req, res) => {
   const css = fs.readFileSync(path.join(dir, "style.css"), "utf8");
   const js = fs.readFileSync(path.join(dir, "app.js"), "utf8");
 
-  res.send(`
-<!DOCTYPE html>
+  res.send(`<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
@@ -361,7 +359,6 @@ async function save(){
       js: document.getElementById("js").value
     })
   });
-
   const data = await res.json();
   alert(data.ok ? "✅ تم الحفظ" : "❌ فشل الحفظ");
 }
@@ -375,14 +372,12 @@ async function improve(){
 }
 </script>
 </body>
-</html>
-`);
+</html>`);
 });
 
 app.post("/edit/:name", (req, res) => {
   const name = safeName(req.params.name);
   ensureProjectFiles(name);
-
   const dir = path.join(WORKSPACE, name);
 
   fs.writeFileSync(path.join(dir, "index.html"), req.body.html || "", "utf8");
@@ -406,8 +401,7 @@ app.post("/improve/:name", (req, res) => {
     html = html
       .replace(/ابدأ الآن/g, "ابدأ الآن مجانًا 🚀")
       .replace(/تواصل معنا/g, "تواصل معنا الآن")
-      .replace(/موقع احترافي/g, "موقع احترافي سريع ومتجاوب")
-      .replace(/Website Project/g, "مشروع ويب احترافي");
+      .replace(/موقع احترافي/g, "موقع احترافي سريع ومتجاوب");
 
     if (!html.includes("ai-improve-badge")) {
       html = html.replace("</body>", `<div class="ai-improve-badge">✨ محسّن تلقائيًا</div></body>`);
@@ -416,11 +410,10 @@ app.post("/improve/:name", (req, res) => {
     fs.writeFileSync(htmlPath, html, "utf8");
 
     let css = fs.readFileSync(cssPath, "utf8");
-
-    if (!css.includes("AI_IMPROVE_V3")) {
+    if (!css.includes("AI_IMPROVE_V4")) {
       css += `
 
-/* AI_IMPROVE_V3 */
+/* AI_IMPROVE_V4 */
 html{scroll-behavior:smooth}
 button,.btn,a{transition:.25s ease}
 button:hover,.btn:hover,a:hover{transform:translateY(-2px);filter:brightness(1.08)}
@@ -430,7 +423,6 @@ section{animation:fadeInUp .55s ease both}
     }
 
     fs.writeFileSync(cssPath, css, "utf8");
-
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ ok: false, error: err.message });
@@ -444,8 +436,7 @@ app.get("/apk/:name", (req, res) => {
   const previewUrl = `${req.protocol}://${req.get("host")}/preview/${name}`;
   const builderUrl = `https://www.pwabuilder.com/?url=${encodeURIComponent(previewUrl)}`;
 
-  res.send(`
-<!DOCTYPE html>
+  res.send(`<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
@@ -464,7 +455,6 @@ li{margin:8px 0}
 <div class="box">
   <h1>📱 APK Builder</h1>
   <p>المشروع: <b>${name}</b></p>
-
   <h3>رابط التطبيق</h3>
   <code>${previewUrl}</code>
 
@@ -473,20 +463,17 @@ li{margin:8px 0}
   <a class="dark" href="/dashboard">رجوع</a>
 
   <hr>
-
   <h3>طريقة استخراج APK</h3>
   <ol>
     <li>افتح PWABuilder.</li>
-    <li>انتظر فحص التطبيق.</li>
+    <li>استخدم رابط التطبيق أعلاه.</li>
     <li>اختر Package for Stores.</li>
     <li>اختر Android.</li>
     <li>نزّل APK أو AAB.</li>
-    <li>سلّم العميل APK + ZIP.</li>
   </ol>
 </div>
 </body>
-</html>
-  `);
+</html>`);
 });
 
 app.get("/export/:name", (req, res) => {
@@ -494,15 +481,10 @@ app.get("/export/:name", (req, res) => {
   ensureProjectFiles(name);
 
   const dir = path.join(WORKSPACE, name);
-
   res.attachment(name + ".zip");
 
   const archive = archiver("zip", { zlib: { level: 1 } });
-
-  archive.on("error", err => {
-    res.status(500).send(err.message);
-  });
-
+  archive.on("error", err => res.status(500).send(err.message));
   archive.pipe(res);
   archive.directory(dir, false);
   archive.finalize();
@@ -515,4 +497,3 @@ app.get("/health", (req, res) => {
 app.listen(PORT, "0.0.0.0", () => {
   console.log("🚀 AI SaaS Factory running on port " + PORT);
 });
-// force deploy
