@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>تطبيق المهام العربي</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600&display=swap" rel="stylesheet">
+    <script defer src="app.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('sw.js');
+            });
+        }
+    </script>
+    <meta name="theme-color" content="#121212">
+</head>
+<body>
+    <!-- شريط التنقل -->
+    <header class="navbar">
+        <div class="logo">مهام</div>
+        <nav class="nav-links" id="navLinks">
+            <a href="#home">الرئيسية</a>
+            <a href="#features">المميزات</a>
+            <a href="#pricing">الأسعار</a>
+            <a href="#gallery">معرض الصور</a>
+            <a href="#contact">اتصل بنا</a>
+        </nav>
+        <button class="menu-toggle" id="menuToggle"><i class="fa fa-bars"></i></button>
+    </header>
+
+    <!-- القسم الرئيسي -->
+    <section id="home" class="hero">
+        <h1>نظام إدارة مهام عربي</h1>
+        <p>تطبيق بسيط، سريع، وآمن لإدارة مهامك اليومية مع دعم الوضع الليلي.</p>
+        <a href="#features" class="btn-primary">اكتشف المميزات</a>
+    </section>
+
+    <!-- المميزات -->
+    <section id="features" class="features">
+        <h2>المميزات</h2>
+        <div class="feature-grid">
+            <div class="feature-item">
+                <i class="fa fa-check-circle"></i>
+                <h3>تخزين محلي</h3>
+                <p>حفظ المهام على المتصفح دون الحاجة للإنترنت.</p>
+            </div>
+            <div class="feature-item">
+                <i class="fa fa-moon"></i>
+                <h3>وضع ليلي</h3>
+                <p>واجهة هادئة للعين تعمل تلقائياً في الظلام.</p>
+            </div>
+            <div class="feature-item">
+                <i class="fa fa-sync-alt"></i>
+                <h3>تحديث فوري</h3>
+                <p>تطبيق يعمل كـ PWA مع تحديثات سريعة عبر Service Worker.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- الأسعار -->
+    <section id="pricing" class="pricing">
+        <h2>الخطط</h2>
+        <div class="pricing-grid">
+            <div class="plan">
+                <h3>مجاني</h3>
+                <p class="price">٠ ريال</p>
+                <ul>
+                    <li>عدد غير محدود من المهام</li>
+                    <li>وضع ليلي</li>
+                    <li>دعم المتصفح فقط</li>
+                </ul>
+                <button class="btn-primary">ابدأ الآن</button>
+            </div>
+            <div class="plan featured">
+                <h3>مميز</h3>
+                <p class="price">٥ ريال/شهر</p>
+                <ul>
+                    <li>مزامنة سحابية</li>
+                    <li>دعم فني 24/7</li>
+                    <li>إشعارات متقدمة</li>
+                </ul>
+                <button class="btn-primary">اشترك الآن</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- معرض الصور -->
+    <section id="gallery" class="gallery">
+        <h2>معرض التطبيق</h2>
+        <div class="gallery-grid">
+            <img src="assets/img1.png" alt="شاشة القائمة">
+            <img src="assets/img2.png" alt="إضافة مهمة">
+            <img src="assets/img3.png" alt="وضع ليلي">
+        </div>
+    </section>
+
+    <!-- اتصل بنا -->
+    <section id="contact" class="contact">
+        <h2>اتصل بنا</h2>
+        <form id="contactForm">
+            <input type="text" name="name" placeholder="الاسم" required>
+            <input type="email" name="email" placeholder="البريد الإلكتروني" required>
+            <textarea name="message" rows="4" placeholder="رسالتك" required></textarea>
+            <button type="submit" class="btn-primary">إرسال</button>
+        </form>
+    </section>
+
+    <!-- زر واتساب عائم -->
+    <a href="https://wa.me/201234567890" class="whatsapp-float" target="_blank" aria-label="تواصل عبر واتساب">
+        <i class="fa fa-whatsapp"></i>
+    </a>
+
+    <footer class="footer">
+        <p>© 2026 تطبيق المهام العربي. جميع الحقوق محفوظة.</p>
+    </footer>
+</body>
+</html>

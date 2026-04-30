@@ -1,0 +1,65 @@
+app.post("/build-website", async (req, res) => {
+  try {
+    const { name, task } = req.body;
+
+    const projectName = sanitizeProjectName(name) || `website_${Date.now()}`;
+    const dir = path.join(WORKSPACE, projectName);
+
+    // 1. نسخ Template
+    const templatePath = path.join(__dirname, "templates/web/landing");
+    fs.copySync(templatePath, dir);
+
+    // 2. قراءة HTML
+    const filePath = path.join(dir, "index.html");
+    let html = fs.readFileSync(filePath, "utf8");
+
+    // 3. AI يعدّل النصوص فقط
+    const aiText = await ai(`
+حوّل هذا الوصف إلى:
+- عنوان جذاب
+- وصف قصير
+- محتوى تسويقي
+
+الوصف:
+${task}
+
+أرجع JSON فقط:
+{
+"title":"",
+"description":"",
+"content":"",
+"whatsapp":""
+}
+`);
+
+    let data;
+    try {
+      data = JSON.parse(aiText);
+    } catch {
+      data = {
+        title: "مشروع احترافي",
+        description: task,
+        content: task,
+        whatsapp: "https://wa.me/"
+      };
+    }
+
+    // 4. استبدال القيم
+    html = html
+      .replace(/{{TITLE}}/g, data.title)
+      .replace(/{{DESCRIPTION}}/g, data.description)
+      .replace(/{{CONTENT}}/g, data.content)
+      .replace(/{{WHATSAPP}}/g, data.whatsapp);
+
+    fs.writeFileSync(filePath, html, "utf8");
+
+    res.json({
+      status: "website_created",
+      name: projectName,
+      preview: `http://localhost:${PORT}/preview/${projectName}/index.html`
+    });
+
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});

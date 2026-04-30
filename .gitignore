@@ -1,0 +1,6 @@
+node_modules/
+.env
+*.zip
+workspace/
+Zoompan_test/
+package-lock.json

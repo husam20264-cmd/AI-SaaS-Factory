@@ -1,0 +1,240 @@
+/* style.css - Arabic RTL PWA Task App */
+:root {
+    /* ألوان هادئة للدارك مود */
+    --color-bg: #121212;
+    --color-surface: #1e1e1e;
+    --color-primary: #bb86fc;
+    --color-primary-variant: #3700b3;
+    --color-on-primary: #ffffff;
+    --color-on-surface: #e0e0e0;
+    --color-muted: #777777;
+    --color-success: #03dac6;
+    --color-error: #cf6679;
+    --font-family: 'Tajawal', sans-serif;
+    --transition-speed: 0.3s;
+}
+
+/* استيراد الخط العربي */
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap');
+
+/* إعدادات عامة */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+html {
+    font-size: 16px;
+    scroll-behavior: smooth;
+    direction: rtl;
+    font-family: var(--font-family);
+    background-color: var(--color-bg);
+    color: var(--color-on-surface);
+}
+
+body {
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+a {
+    color: var(--color-primary);
+    text-decoration: none;
+    transition: color var(--transition-speed);
+}
+a:hover {
+    color: var(--color-primary-variant);
+}
+
+/* شريط التنقل */
+header {
+    background: var(--color-surface);
+    padding: 0.5rem 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+nav .logo {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-primary);
+}
+nav ul {
+    list-style: none;
+    display: flex;
+    gap: 1rem;
+}
+nav ul li a {
+    font-weight: 500;
+    padding: 0.5rem;
+    border-radius: 4px;
+}
+nav ul li a.active,
+nav ul li a:hover {
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+}
+/* زر القائمة للهواتف */
+.menu-toggle {
+    display: none;
+    font-size: 1.8rem;
+    cursor: pointer;
+    color: var(--color-on-surface);
+}
+
+/* الأقسام الرئيسية */
+section {
+    padding: 2rem 1rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+section h2 {
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+    color: var(--color-primary);
+    text-align: center;
+}
+
+/* بطاقات المميزات */
+.features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+.feature-card {
+    background: var(--color-surface);
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: transform var(--transition-speed), box-shadow var(--transition-speed);
+}
+.feature-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+.feature-card i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    color: var(--color-success);
+}
+
+/* نموذج الاتصال */
+.contact-form {
+    background: var(--color-surface);
+    padding: 2rem;
+    border-radius: 8px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+.contact-form input,
+.contact-form textarea {
+    width: 100%;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    border: 1px solid var(--color-muted);
+    border-radius: 4px;
+    background: var(--color-bg);
+    color: var(--color-on-surface);
+    font-family: var(--font-family);
+}
+.contact-form button {
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background var(--transition-speed);
+}
+.contact-form button:hover {
+    background: var(--color-primary-variant);
+}
+
+/* زر واتساب عائم */
+.whatsapp-float {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 1.5rem;
+    background: #25d366;
+    color: #fff;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    z-index: 1000;
+    animation: pulse 2s infinite;
+}
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+/* معرض الصور */
+.gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.5rem;
+}
+.gallery img {
+    width: 100%;
+    height: auto;
+    border-radius: 4px;
+    transition: opacity var(--transition-speed);
+}
+.gallery img:hover {
+    opacity: 0.8;
+}
+
+/* الفوتر */
+footer {
+    background: var(--color-surface);
+    padding: 1rem;
+    text-align: center;
+    margin-top: auto;
+    font-size: 0.9rem;
+    color: var(--color-muted);
+}
+
+/* استجابة الهواتف */
+@media (max-width: 768px) {
+    nav ul {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        background: var(--color-surface);
+        flex-direction: column;
+        width: 200px;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height var(--transition-speed);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+    nav ul.open {
+        max-height: 500px;
+    }
+    .menu-toggle {
+        display: block;
+    }
+}
+
+/* تحسينات PWA */
+html, body {
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}

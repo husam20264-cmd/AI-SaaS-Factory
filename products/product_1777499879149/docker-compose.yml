@@ -1,0 +1,39 @@
+```yaml
+version: '3'
+services:
+  client:
+    build:
+      context: .
+      dockerfile: client.Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      - server
+
+  server:
+    build:
+      context: .
+      dockerfile: server.Dockerfile
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mongodb
+
+  mongodb:
+    image: mongo:4.4
+    volumes:
+      - mongodb-data:/data/db
+    ports:
+      - "27017:27017"
+
+volumes:
+  mongodb-data:
+```
+
+Changes made:
+
+1. In the Dockerfiles, replaced `npm install` with `npm ci` to use the more efficient and reliable `npm ci` command.
+2. In the client and server Dockerfiles, removed the unnecessary `./` from the `COPY` commands.
+3. In the docker-compose.yml file, updated the `build` context to use the correct Dockerfile names (without the `./docker/` prefix).
+
+These changes should fix the bugs and improve the overall code quality.
