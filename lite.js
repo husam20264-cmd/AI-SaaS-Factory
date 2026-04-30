@@ -27,6 +27,123 @@ function esc(s) {
     .replaceAll(">", "&gt;");
 }
 
+function ensureProjectFiles(name) {
+  const dir = path.join(WORKSPACE, name);
+
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+
+  const htmlPath = path.join(dir, "index.html");
+  const cssPath = path.join(dir, "style.css");
+  const jsPath = path.join(dir, "app.js");
+
+  if (!fs.existsSync(htmlPath)) {
+    fs.writeFileSync(htmlPath, `<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${name}</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="hero">
+    <h1>🚀 ${name}</h1>
+    <p>موقع احترافي تم إنشاؤه بواسطة AI SaaS Factory</p>
+    <a class="btn" href="#contact">ابدأ الآن</a>
+  </main>
+
+  <section class="features">
+    <h2>مميزات المشروع</h2>
+    <div class="cards">
+      <div>⚡ سريع</div>
+      <div>📱 متجاوب</div>
+      <div>🎨 تصميم نظيف</div>
+    </div>
+  </section>
+
+  <section id="contact" class="contact">
+    <h2>تواصل معنا</h2>
+    <p>جاهز للانطلاق الآن.</p>
+  </section>
+
+  <script src="app.js"></script>
+</body>
+</html>`, "utf8");
+  }
+
+  if (!fs.existsSync(cssPath)) {
+    fs.writeFileSync(cssPath, `body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.hero {
+  min-height: 70vh;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 40px;
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  color: white;
+}
+
+.hero h1 {
+  font-size: 42px;
+  margin-bottom: 10px;
+}
+
+.btn {
+  display: inline-block;
+  background: white;
+  color: #2563eb;
+  padding: 12px 20px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.features, .contact {
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+  max-width: 800px;
+  margin: 20px auto;
+}
+
+.cards div {
+  background: white;
+  padding: 20px;
+  border-radius: 14px;
+  box-shadow: 0 10px 25px rgba(0,0,0,.08);
+}
+
+.ai-improve-badge {
+  position: fixed;
+  bottom: 14px;
+  left: 14px;
+  z-index: 9999;
+  background: #111827;
+  color: #fff;
+  padding: 9px 13px;
+  border-radius: 999px;
+  font-size: 12px;
+}`, "utf8");
+  }
+
+  if (!fs.existsSync(jsPath)) {
+    fs.writeFileSync(jsPath, `console.log("AI SaaS Factory project loaded");`, "utf8");
+  }
+}
+
 app.get("/", (req, res) => {
   res.redirect("/dashboard");
 });
@@ -66,21 +183,17 @@ ${projects.map(p => `
     <h3>${p}</h3>
     <div class="small">Website Project</div>
     <a class="btn blue" href="/edit/${p}">تعديل</a>
-    <a class="btn dark" target="_blank" href="/workspace/${p}/index.html?v=${Date.now()}">معاينة</a>
+    <a class="btn dark" target="_blank" href="/preview/${p}">معاينة</a>
     <a class="btn green" href="/export/${p}">ZIP</a>
-    <button class="btn purple" onclick="improve('${p}')">✨ AI Improve</button>
+    <button class="btn purple" onclick="improve('${p}')">AI Improve ✨</button>
   </div>
 `).join("")}
 </div>
 
 <script>
 async function improve(name){
-  const ok = confirm("تحسين المشروع تلقائيًا؟ " + name);
-  if(!ok) return;
-
   const res = await fetch("/improve/" + name, { method: "POST" });
   const data = await res.json();
-
   alert(data.ok ? "✅ تم التحسين" : "❌ " + data.error);
   location.reload();
 }
@@ -90,21 +203,20 @@ async function improve(name){
 `);
 });
 
+app.get("/preview/:name", (req, res) => {
+  const name = safeName(req.params.name);
+  ensureProjectFiles(name);
+  res.redirect("/workspace/" + name + "/index.html?v=" + Date.now());
+});
+
 app.get("/edit/:name", (req, res) => {
   const name = safeName(req.params.name);
+  ensureProjectFiles(name);
+
   const dir = path.join(WORKSPACE, name);
-
-  if (!fs.existsSync(dir)) {
-    return res.status(404).send("Project not found");
-  }
-
-  const htmlPath = path.join(dir, "index.html");
-  const cssPath = path.join(dir, "style.css");
-  const jsPath = path.join(dir, "app.js");
-
-  const html = fs.existsSync(htmlPath) ? fs.readFileSync(htmlPath, "utf8") : "";
-  const css = fs.existsSync(cssPath) ? fs.readFileSync(cssPath, "utf8") : "";
-  const js = fs.existsSync(jsPath) ? fs.readFileSync(jsPath, "utf8") : "";
+  const html = fs.readFileSync(path.join(dir, "index.html"), "utf8");
+  const css = fs.readFileSync(path.join(dir, "style.css"), "utf8");
+  const js = fs.readFileSync(path.join(dir, "app.js"), "utf8");
 
   res.send(`
 <!DOCTYPE html>
@@ -127,7 +239,7 @@ textarea{width:100%;height:78vh;background:#020617;color:#e5e7eb;border:0;paddin
   <b>✏️ ${name}</b>
   <button onclick="save()">حفظ</button>
   <button onclick="improve()">AI Improve</button>
-  <a target="_blank" href="/workspace/${name}/index.html?v=${Date.now()}">معاينة</a>
+  <a target="_blank" href="/preview/${name}">معاينة</a>
   <a href="/export/${name}">ZIP</a>
   <a href="/dashboard">رجوع</a>
 </div>
@@ -180,11 +292,9 @@ async function improve(){
 
 app.post("/edit/:name", (req, res) => {
   const name = safeName(req.params.name);
-  const dir = path.join(WORKSPACE, name);
+  ensureProjectFiles(name);
 
-  if (!fs.existsSync(dir)) {
-    return res.status(404).json({ ok: false, error: "Project not found" });
-  }
+  const dir = path.join(WORKSPACE, name);
 
   fs.writeFileSync(path.join(dir, "index.html"), req.body.html || "", "utf8");
   fs.writeFileSync(path.join(dir, "style.css"), req.body.css || "", "utf8");
@@ -196,57 +306,40 @@ app.post("/edit/:name", (req, res) => {
 app.post("/improve/:name", (req, res) => {
   try {
     const name = safeName(req.params.name);
+    ensureProjectFiles(name);
+
     const dir = path.join(WORKSPACE, name);
     const htmlPath = path.join(dir, "index.html");
     const cssPath = path.join(dir, "style.css");
 
-    if (!fs.existsSync(htmlPath)) {
-      return res.status(404).json({ ok: false, error: "index.html not found" });
-    }
-
     let html = fs.readFileSync(htmlPath, "utf8");
 
     html = html
-      .replace(/سجل الآن/g, "ابدأ الآن مجانًا 🚀")
       .replace(/ابدأ الآن/g, "ابدأ الآن مجانًا 🚀")
       .replace(/تواصل معنا/g, "تواصل معنا الآن")
-      .replace(/منصة التطوع/g, "منصة العمل الذكية");
+      .replace(/موقع احترافي/g, "موقع احترافي سريع ومتجاوب");
 
     if (!html.includes("ai-improve-badge")) {
-      html = html.replace(
-        "</body>",
-        `<div class="ai-improve-badge">✨ محسّن تلقائيًا</div></body>`
-      );
+      html = html.replace("</body>", `<div class="ai-improve-badge">✨ محسّن تلقائيًا</div></body>`);
     }
 
     fs.writeFileSync(htmlPath, html, "utf8");
 
-    let css = fs.existsSync(cssPath) ? fs.readFileSync(cssPath, "utf8") : "";
+    let css = fs.readFileSync(cssPath, "utf8");
 
-    if (!css.includes("AI_IMPROVE_V1")) {
+    if (!css.includes("AI_IMPROVE_V2")) {
       css += `
 
-/* AI_IMPROVE_V1 */
+/* AI_IMPROVE_V2 */
 html{scroll-behavior:smooth}
 button,.btn,a{transition:.25s ease}
 button:hover,.btn:hover,a:hover{transform:translateY(-2px);filter:brightness(1.08)}
 section{animation:fadeInUp .55s ease both}
 @keyframes fadeInUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
-.ai-improve-badge{
-  position:fixed;
-  bottom:14px;
-  left:14px;
-  z-index:9999;
-  background:#111827;
-  color:#fff;
-  padding:9px 13px;
-  border-radius:999px;
-  font-size:12px;
-  box-shadow:0 10px 25px rgba(0,0,0,.25);
-}
 `;
-      fs.writeFileSync(cssPath, css, "utf8");
     }
+
+    fs.writeFileSync(cssPath, css, "utf8");
 
     res.json({ ok: true });
   } catch (err) {
@@ -256,11 +349,9 @@ section{animation:fadeInUp .55s ease both}
 
 app.get("/export/:name", (req, res) => {
   const name = safeName(req.params.name);
-  const dir = path.join(WORKSPACE, name);
+  ensureProjectFiles(name);
 
-  if (!fs.existsSync(dir)) {
-    return res.status(404).send("Project not found");
-  }
+  const dir = path.join(WORKSPACE, name);
 
   res.attachment(name + ".zip");
 
