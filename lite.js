@@ -45,7 +45,7 @@ function ensureProjectFiles(name) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${name}</title>
   <meta name="theme-color" content="#2563eb">
-  <link rel="manifest" href="${manifestHref}">
+  <link rel="manifest" href="/pwa-manifest/${name}">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -77,10 +77,10 @@ function ensureProjectFiles(name) {
 
     if (!html.includes('rel="manifest"')) {
       html = html.replace("</head>", `  <meta name="theme-color" content="#2563eb">
-  <link rel="manifest" href="${manifestHref}">
+  <link rel="manifest" href="/pwa-manifest/${name}">
 </head>`);
     } else {
-      html = html.replace(/<link\s+rel=["']manifest["'][^>]*>/i, `<link rel="manifest" href="${manifestHref}">`);
+      html = html.replace(/<link\s+rel=["']manifest["'][^>]*>/i, `<link rel="manifest" href="/pwa-manifest/${name}">`);
     }
 
     fs.writeFileSync(htmlPath, html, "utf8");
@@ -201,41 +201,13 @@ self.addEventListener("fetch", event => {
 }
 
 // مهم: manifest route قبل static
-app.get(/^\/manifest\/([^/]+)\/?$/, (req, res) => {
-  const name = safeName(req.params[0]);
-  ensureProjectFiles(name);
-
-  res.setHeader("Content-Type", "application/manifest+json");
-  res.setHeader("Cache-Control", "no-store");
-
-  res.json({
-    id: "/" + name + "/",
-    name: name,
-    short_name: name.slice(0, 12),
-    description: "تطبيق احترافي تم إنشاؤه باستخدام AI SaaS Factory",
-    start_url: "/preview/" + name,
-    scope: "/",
-    display: "standalone",
-    orientation: "portrait",
-    background_color: "#ffffff",
-    theme_color: "#2563eb",
-    lang: "ar",
-    dir: "rtl",
-    categories: ["business", "productivity"],
-    icons: [
-      {
-        src: "https://cdn-icons-png.flaticon.com/512/1046/1046784.png",
-        sizes: "512x512",
-        type: "image/png",
-        purpose: "any maskable"
-      }
-    ]
-  });
-});
 
 
 // Manifest route MUST be before static
-app.get("/manifest/:name", (req, res) => {
+
+
+// PWA manifest route - isolated path, no static conflict
+app.get("/pwa-manifest/:name", (req, res) => {
   const name = safeName(req.params.name);
 
   res.setHeader("Content-Type", "application/manifest+json");
